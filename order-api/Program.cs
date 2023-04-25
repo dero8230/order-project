@@ -21,8 +21,8 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = options.DefaultPolicy;
 });
 
-builder.Services.AddSingleton<PlotroomOrdersContext>(new PlotroomOrdersContext());
-builder.Services.AddSingleton<VisionContext>(new VisionContext());
+builder.Services.AddSingleton<PlotroomOrdersContext>(new PlotroomOrdersContext(builder.Configuration));
+builder.Services.AddSingleton<VisionContext>(new VisionContext(builder.Configuration));
 builder.Services.AddServices();
 builder.Services.AddScoppedServices();
 
