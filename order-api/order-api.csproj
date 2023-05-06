@@ -8,6 +8,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\home\**" />
+    <Compile Remove="www\**" />
+    <Content Remove="wwwroot\home\**" />
+    <Content Remove="www\**" />
+    <EmbeddedResource Remove="wwwroot\home\**" />
+    <EmbeddedResource Remove="www\**" />
+    <None Remove="wwwroot\home\**" />
+    <None Remove="www\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EntityFramework" Version="6.4.4" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="6.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.5" />

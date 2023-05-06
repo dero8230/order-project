@@ -24,6 +24,7 @@ namespace order_api.Models
         public DateTime? VisionExportDate { get; set; }
         public string? NotifyEmployee { get; set; }
         public string? NotifyEmployee2 { get; set; }
+        public string? Extras { get; set; }
 
         [NotMapped]
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

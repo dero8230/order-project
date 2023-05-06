@@ -2,6 +2,7 @@
 using order_api.Models;
 using order_api.Models.PR;
 using order_api.Models.Wrapper;
+using System.Text.Json;
 
 namespace order_api.Services.Orders
 {
@@ -9,11 +10,13 @@ namespace order_api.Services.Orders
     {
         private readonly PlotroomOrdersContext _db;
         private readonly VisionContext _db2;
+        private readonly IHttpContextAccessor _context;
 
-        public OrderService(PlotroomOrdersContext db, VisionContext db2)
+        public OrderService(PlotroomOrdersContext db, VisionContext db2, IHttpContextAccessor context)
         {
             _db = db;
             _db2 = db2;
+            _context = context;
         }
         public async Task<Result<Order>> AddOrder(CreateOrderRequest createOrderRequest)
         {
@@ -73,19 +76,17 @@ namespace order_api.Services.Orders
                 OrderId = orderID,
                 ProjectNumber = createOrderRequest.ProjectNumber,
                 PrintingFor = createOrderRequest.PrintingFor,
-                DateSubmitted = createOrderRequest.DateSubmitted,
                 DateRequired = createOrderRequest.DateRequired,
                 SpecialInstructions = createOrderRequest.SpecialInstructions,
                 OrderType = createOrderRequest.OrderType,
                 OrderLink = createOrderRequest.OrderLink,
-                SubmittedBy = createOrderRequest.SubmittedBy,
-                OrderComplete = createOrderRequest.OrderComplete,
-                InvoiceDate = createOrderRequest.InvoiceDate,
-                VisionExportDate = createOrderRequest.VisionExportDate,
                 NotifyEmployee = createOrderRequest.NotifyEmployee,
                 NotifyEmployee2 = createOrderRequest.NotifyEmployee2,
                 OrderDetails = orderDetails,
-                OrderSignAndSeal = orderSignAndSeal
+                OrderSignAndSeal = orderSignAndSeal,
+                DateSubmitted = DateTime.Now,
+                SubmittedBy = _context.HttpContext?.User.Identity?.Name,
+                Extras = createOrderRequest.Extras == null? null : JsonSerializer.Serialize(createOrderRequest.Extras),
             };
             await _db.AddAsync(order);
             await _db.AddRangeAsync(orderDetails);
@@ -164,9 +165,9 @@ namespace order_api.Services.Orders
             var result = await _db.OrderSignees
                 .Select(os => new
                 {
-                    DisplayName = os.DisplayName,
-                    Discipline = os.Discipline,
-                    Email = os.Email
+                    os.DisplayName,
+                    os.Discipline,
+                    os.Email
                 })
                 .ToListAsync();
             return new Result<object>(result);

@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace order_api.Models;
 
 public class CreateOrderRequest
 {
-    public string ProjectNumber { get; set; }
+    [Required]
+    public string ProjectNumber { get; set; } = null!;
+    [Required]
     public string? PrintingFor { get; set; }
-    public DateTime? DateSubmitted { get; set; }
     public DateTime? DateRequired { get; set; }
     public string? SpecialInstructions { get; set; }
     public string? OrderType { get; set; }
     public string? OrderLink { get; set; }
-    public string? SubmittedBy { get; set; }
-    public bool? OrderComplete { get; set; }
-    public DateTime? InvoiceDate { get; set; }
-    public DateTime? VisionExportDate { get; set; }
     public string? NotifyEmployee { get; set; }
     public string? NotifyEmployee2 { get; set; }
+    public List<object>? Extras { get; set; }
 
     public List<CreateOrderDetailRequest>OrderDetails { get; set; } = null!;
     public CreateOrderSignAndSealRequest? OrderSignAndSeal { get; set; }

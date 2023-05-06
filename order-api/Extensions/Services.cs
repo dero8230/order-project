@@ -7,6 +7,7 @@ namespace order_api.Extensions
     {
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
+            services.AddHttpContextAccessor();
             Console.WriteLine("Adding Services.......");
             var transientServiceType = typeof(IServerService);
             var scopedServiceType = typeof(IScopedService);
