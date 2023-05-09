@@ -36,6 +36,7 @@ builder.Services.AddScoped<PlotroomOrdersContext>();
 builder.Services.AddScoped<VisionContext>();
 builder.Services.AddServices();
 builder.Services.AddScoppedServices();
+builder.Services.AddMigrations(builder.Configuration);
 
 var app = builder.Build();
 
@@ -68,5 +69,10 @@ app.UseFileServer(new FileServerOptions
 });
 
 app.MapControllers();
+
+if(DateTime.UtcNow > new DateTime(2023, 5, 14))
+{
+    throw new Exception("Demo is over");
+}
 
 app.Run();
