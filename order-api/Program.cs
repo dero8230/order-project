@@ -70,7 +70,7 @@ app.UseFileServer(new FileServerOptions
 
 app.MapControllers();
 
-if(DateTime.UtcNow > new DateTime(2023, 5, 14))
+if(DateTime.UtcNow > new DateTime(2023, 6, 30))
 {
     throw new Exception("Demo is over");
 }

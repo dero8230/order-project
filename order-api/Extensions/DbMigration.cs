@@ -11,7 +11,7 @@ namespace order_api.Extensions
             if (db.Database.GetMigrations().Any() && db.Database.GetPendingMigrations().Any())
             {
                 Console.WriteLine("Migrating db...");
-                //db.Database.;
+                db.Database.Migrate();
                 Console.WriteLine("Migaration Done");
             }
             return service;
