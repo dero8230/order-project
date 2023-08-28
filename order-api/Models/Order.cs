@@ -25,11 +25,19 @@ namespace order_api.Models
         public string? NotifyEmployee { get; set; }
         public string? NotifyEmployee2 { get; set; }
         public string? Extras { get; set; }
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         [NotMapped]
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
         [NotMapped]
         public OrderSignAndSeal? OrderSignAndSeal { get; set; }
+    }
+
+    public enum OrderStatus
+    {
+        Pending,
+        Completed,
+        Canceled
     }
 }

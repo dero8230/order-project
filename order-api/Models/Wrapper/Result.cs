@@ -13,4 +13,13 @@
             Success = success;
         }
     }
+
+    public class Result
+    {
+        public static Result<T> GetResult<T>(T data, string messege = "", bool success = true)
+            where T : class
+        {
+            return new Result<T>(data, messege, success);
+        }
+    }
 }

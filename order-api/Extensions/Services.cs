@@ -54,6 +54,7 @@ namespace order_api.Extensions
         public static IServiceCollection AddScoppedServices(this IServiceCollection services)
         {
             services.AddScoped<ExceptionMiddleWare>();
+            services.AddScoped<AdmnMiddleware>();
             return services;
         }
     }

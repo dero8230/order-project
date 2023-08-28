@@ -19,18 +19,19 @@ public partial class PlotroomOrdersContext : DbContext
         _configuration = configuration;
     }
 
-    public virtual DbSet<Order> Orders { get; set; }
+    public virtual DbSet<Order> Orders { get; set; } = null!;
 
-    public virtual DbSet<OrderAdmin> OrderAdmins { get; set; }
+    public virtual DbSet<OrderAdmin> OrderAdmins { get; set; } = null!;
 
-    public virtual DbSet<OrderDetail> OrderDetails { get; set; }
+    public virtual DbSet<OrderDetail> OrderDetails { get; set; } = null!;
 
-    public virtual DbSet<OrderItemPricing> OrderItemPricings { get; set; }
+    public virtual DbSet<OrderItemPricing> OrderItemPricings { get; set; } = null!;
 
-    public virtual DbSet<OrderSignAndSeal> OrderSignAndSeals { get; set; }
+    public virtual DbSet<OrderSignAndSeal> OrderSignAndSeals { get; set; } = null!;
 
-    public virtual DbSet<OrderSignee> OrderSignees { get; set; }
-    public virtual DbSet<PaperSize> PaperSize { get; set; }
+    public virtual DbSet<OrderSignee> OrderSignees { get; set; } = null!;
+    public virtual DbSet<PaperSize> PaperSize { get; set; } = null!;
+    public virtual DbSet<Invoice> Invoices { get; set; } = null!;
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer(_configuration.GetSection("PlotroomOrdersDb").Value);
 

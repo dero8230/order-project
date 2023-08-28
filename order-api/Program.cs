@@ -17,9 +17,9 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
     {
-        builder.AllowAnyOrigin()
-               .AllowAnyHeader()
-               .AllowAnyMethod();
+    builder.WithOrigins("http://localhost:3000")
+           .AllowAnyHeader().AllowCredentials()
+           .AllowAnyMethod();
     });
 });
 
@@ -39,15 +39,14 @@ builder.Services.AddScoppedServices();
 builder.Services.AddMigrations(builder.Configuration);
 
 var app = builder.Build();
+app.UseDeveloperExceptionPage();
 
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseStaticFiles();
 app.UseDefaultFiles();
 app.UseRouting();
 app.UseCors();
-
-app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -70,7 +69,7 @@ app.UseFileServer(new FileServerOptions
 
 app.MapControllers();
 
-if(DateTime.UtcNow > new DateTime(2023, 6, 30))
+if(DateTime.UtcNow > new DateTime(2023, 8, 30))
 {
     throw new Exception("Demo is over");
 }

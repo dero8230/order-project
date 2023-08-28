@@ -19,11 +19,11 @@ public partial class VisionContext : DbContext
         _configuration = configuration;
     }
 
-    public virtual DbSet<CfgorgCode> CfgorgCodes { get; set; }
+    public virtual DbSet<CfgorgCode> CfgorgCodes { get; set; } = null!;
 
-    public virtual DbSet<Em> Ems { get; set; }
+    public virtual DbSet<Em> Ems { get; set; } = null!;
 
-    public virtual DbSet<Pr> Prs { get; set; }
+    public virtual DbSet<Pr> Prs { get; set; } = null!;
 
     public DbSet<ActiveJob> ActiveJobs { get; set; } = null!;
 

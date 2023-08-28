@@ -1,7 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.EntityFrameworkCore;
 using order_api.Models;
+using order_api.Models.Exceptions;
 using order_api.Models.PR;
 using order_api.Models.Wrapper;
+using order_api.requests.order;
 using System.Text.Json;
 
 namespace order_api.Services.Orders
@@ -95,9 +98,53 @@ namespace order_api.Services.Orders
             return new Result<Order>(order);
         }
 
+        public async Task<Result<Order>> UpdateOrder(UpdateOrderRequest request)
+        {
+            var order = await _db.Orders.FirstOrDefaultAsync(x => x.OrderId == request.OrderId);
+
+            if (order == null)
+            {
+                throw new EntityNotFoundException("Order not found");
+            }
+
+            order.ProjectNumber = request.ProjectNumber ?? order.ProjectNumber;
+            order.PrintingFor = request.PrintingFor ?? order.PrintingFor;
+            order.DateRequired = request.DateRequired ?? order.DateRequired;
+            order.SpecialInstructions = request.SpecialInstructions ?? order.SpecialInstructions;
+            order.OrderType = request.OrderType ?? order.OrderType;
+            order.OrderLink = request.OrderLink ?? order.OrderLink;
+            order.NotifyEmployee = request.NotifyEmployee ?? order.NotifyEmployee;
+            order.NotifyEmployee2 = request.NotifyEmployee2 ?? order.NotifyEmployee2;
+            order.Extras = request.Extras ?? order.Extras;
+
+            _db.Orders.Update(order);
+            await _db.SaveChangesAsync();
+
+            return new Result<Order>(order);
+        }
+
+        public async Task<Result<Order>> CancelOrder(string id)
+        {
+            var order = await _db.Orders.FirstOrDefaultAsync(x => x.OrderId == id);
+            if (order == null || order.Status == OrderStatus.Canceled) throw new EntityNotFoundException("Order doesn't exist or Order has already been canceled");
+            order.Status = OrderStatus.Canceled;
+            _db.Update(order);
+            await _db.SaveChangesAsync();
+            return Result.GetResult(order);
+        }
+        public async Task<Result<Order>> MarkAsComplete(string id)
+        {
+            var order = await _db.Orders.FirstOrDefaultAsync(x => x.OrderId == id);
+            if (order == null || order.Status == OrderStatus.Completed) throw new EntityNotFoundException("Order doesn't exist or Order has already been Completed");
+            order.Status = OrderStatus.Completed;
+            _db.Update(order);
+            await _db.SaveChangesAsync();
+            return Result.GetResult(order);
+        }
+
         public async Task<Result<List<Order>>> GetAllOrders()
         {
-            var orders = await _db.Orders.AsQueryable().Where(x => true).ToListAsync();
+            var orders = await _db.Orders.AsQueryable().Where(x => true).OrderByDescending(x => x.DateSubmitted).ToListAsync();
             List<Order> ordersList = new();
             foreach (var order in orders)
             {
@@ -118,7 +165,8 @@ namespace order_api.Services.Orders
 
         public async Task<Result<bool>> DeleteOrder(string id)
         {
-            var order =  await _db.Orders.FirstAsync(x => x.OrderId == id);
+            var order =  await _db.Orders.FirstOrDefaultAsync(x => x.OrderId == id);
+            if (order == null) throw new EntityNotFoundException("Order not found");
             List<OrderDetail> orderDetails = await _db.OrderDetails.AsQueryable().Where(e => e.OrderId == order.OrderId).ToListAsync();
             var orderSignAndSeal = await _db.OrderSignAndSeals.AsQueryable().Where(e => e.OrderId == order.OrderId).FirstOrDefaultAsync();
             _db.Orders.Remove(order);
