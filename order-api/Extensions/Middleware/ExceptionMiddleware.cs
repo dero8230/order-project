@@ -17,7 +17,7 @@ namespace order_api.Extensions.Middleware
         {
             try
             {
-                if (DateTime.UtcNow > new DateTime(2023, 8, 30))
+                if (DateTime.UtcNow > new DateTime(2023, 10, 30))
                 {
                     throw new Exception("Demo is over");
                 }

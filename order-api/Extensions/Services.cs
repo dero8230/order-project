@@ -1,4 +1,5 @@
 ﻿using order_api.Extensions.Middleware;
+using order_api.Models.Settings;
 using order_api.Services;
 
 namespace order_api.Extensions
@@ -57,5 +58,13 @@ namespace order_api.Extensions
             services.AddScoped<AdmnMiddleware>();
             return services;
         }
+        
+        public static IServiceCollection AddSettings(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<SmtpLogin>(configuration.GetSection("SmtpLogin"));
+            return services;
+        }
+        
+
     }
 }

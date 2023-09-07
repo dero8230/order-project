@@ -37,6 +37,7 @@ builder.Services.AddScoped<VisionContext>();
 builder.Services.AddServices();
 builder.Services.AddScoppedServices();
 builder.Services.AddMigrations(builder.Configuration);
+builder.Services.AddSettings(builder.Configuration);
 
 var app = builder.Build();
 app.UseDeveloperExceptionPage();
@@ -69,7 +70,7 @@ app.UseFileServer(new FileServerOptions
 
 app.MapControllers();
 
-if(DateTime.UtcNow > new DateTime(2023, 8, 30))
+if(DateTime.UtcNow > new DateTime(2023, 10, 30))
 {
     throw new Exception("Demo is over");
 }

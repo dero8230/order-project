@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Order Confirmation</title>
+</head>
+<body>
+    <table cellspacing="0" cellpadding="0" border="0" width="100%" style="font-family: Arial, sans-serif;">
+        <tr>
+            <td align="center" bgcolor="#f3f3f3" style="padding: 20px;">
+                <table cellspacing="0" cellpadding="0" border="0" width="600" style="background-color: #ffffff; border-radius: 10px;">
+                    <tr>
+                        <td style="padding: 40px;">
+                            <h1>Order Confirmation</h1>
+                            <p>Dear <span style="font-weight: bold;">{{name}}</span>,</p>
+                            <p>Your order with the following details has been successfully submitted:</p>
+                            <ul>
+                                <li><strong>Submitted By:</strong> {{submittedBy}}</li>
+                                <li><strong>Order Number:</strong> {{orderNo}}</li>
+                                <li><strong>Project Number:</strong> {{projectNo}}</li>
+                            </ul>
+                            <p>Thank you for choosing our services. We will process your order as soon as possible.</p>
+                            <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
+                            <p>Best regards,</p>
+                            <p>Your Company Name</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
