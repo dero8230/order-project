@@ -80,13 +80,24 @@ namespace order_api.Services.Orders
                 CivilSigner = createOrderRequest.OrderSignAndSeal.CivilSigner,
                 StructSigner = createOrderRequest.OrderSignAndSeal.StructSigner,
             };
-            if(createOrderRequest.OrderLink != null)
+            string? filePaths = null;
+            if(createOrderRequest.Files != null)
             {
-                byte[] data = Convert.FromBase64String(createOrderRequest.OrderLink);
-                string basePath = _configuration.GetValue<string>("FileSavePath");
-                string fullPath = Path.Combine(basePath, orderID);
-                await File.WriteAllBytesAsync(fullPath, data);
-                createOrderRequest.OrderLink = fullPath;
+                List<string> paths = new();
+                foreach (var file in createOrderRequest.Files)
+                {
+                    byte[] data = Convert.FromBase64String(file.Data);
+                    string basePath = _configuration.GetValue<string>("FileSavePath");
+                    basePath = Path.Combine(basePath, orderID);
+                    Directory.CreateDirectory(basePath);
+                    string fullPath = Path.Combine(basePath, file.Name);
+                    await File.WriteAllBytesAsync(fullPath, data);
+                    paths.Add(fullPath);
+                }
+                if (paths.Count > 0)
+                {
+                    filePaths = string.Join("#m2m", paths);
+                }
             }
 
             var order = new Order
@@ -97,7 +108,7 @@ namespace order_api.Services.Orders
                 DateRequired = createOrderRequest.DateRequired,
                 SpecialInstructions = createOrderRequest.SpecialInstructions,
                 OrderType = createOrderRequest.OrderType,
-                OrderLink = createOrderRequest.OrderLink,
+                OrderLink = filePaths,
                 NotifyEmployee = createOrderRequest.NotifyEmployee,
                 NotifyEmployee2 = createOrderRequest.NotifyEmployee2,
                 OrderDetails = orderDetails,

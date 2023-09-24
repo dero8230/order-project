@@ -1,8 +1,8 @@
-﻿using MailKit.Net.Smtp;
-using Microsoft.Extensions.Options;
-using MimeKit;
+﻿using Microsoft.Extensions.Options;
 using order_api.Models.Settings;
 using order_api.requests.mail;
+using System.Net;
+using System.Net.Mail;
 
 namespace order_api.Services.Mail
 {
@@ -16,33 +16,33 @@ namespace order_api.Services.Mail
         {
             try
             {
-                var client = new SmtpClient();
-                await client.ConnectAsync(_logins.Host, _logins.Port, MailKit.Security.SecureSocketOptions.StartTlsWhenAvailable);
-                await client.AuthenticateAsync(_logins.Username, _logins.Password);
+                using var client = new SmtpClient(_logins.Host, _logins.Port);
+                client.UseDefaultCredentials = false;
+                client.Credentials = new NetworkCredential(_logins.Username, _logins.Password);
+                client.EnableSsl = _logins.UseSsl;
+
                 string body = await File.ReadAllTextAsync(Path.Combine(Directory.GetCurrentDirectory(),
                     "wwwroot",
                     "templates",
-                    $"{Enum.GetName<EmailTemplateType>(request.EmailTemplateType)}.html"));
+                    $"{Enum.GetName(request.EmailTemplateType)}.html"));
+
                 foreach (var item in request.BodyParams)
                 {
                     body = body.Replace(item.Key, item.Value);
                 }
-                var email = new MimeMessage
-                {
-                    Sender = new MailboxAddress("Plotroom Order", _logins.From),
-                    Subject = request.Subject,
-                    Body = new BodyBuilder
-                    {
-                        HtmlBody = body
-                    }.ToMessageBody()
-                };
-                email.From.Add(InternetAddress.Parse(_logins.From));
-                email.To.Add(InternetAddress.Parse(request.Email));
-                await client.SendAsync(email);
-                await client.DisconnectAsync(true);
+
+                using var mail = new MailMessage();
+                mail.From = new MailAddress(_logins.From, "Plotroom Order");
+                mail.Subject = request.Subject;
+                mail.Body = body;
+                mail.IsBodyHtml = true;
+                mail.To.Add(request.Email);
+
+                await client.SendMailAsync(mail);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
             }
         }
     }

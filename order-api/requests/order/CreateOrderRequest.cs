@@ -13,13 +13,13 @@ public class CreateOrderRequest
     public DateTime? DateRequired { get; set; }
     public string? SpecialInstructions { get; set; }
     public string? OrderType { get; set; }
-    public string? OrderLink { get; set; }
     public string? NotifyEmployee { get; set; }
     public string? NotifyEmployee2 { get; set; }
     public List<object>? Extras { get; set; }
 
     public List<CreateOrderDetailRequest>OrderDetails { get; set; } = null!;
     public CreateOrderSignAndSealRequest? OrderSignAndSeal { get; set; }
+    public List<FileUploadRequest>? Files { get; set; }
 }
 
 public class CreateOrderDetailRequest
@@ -66,4 +66,14 @@ public class CreateOrderSignAndSealRequest
     public string? PlumbSigner { get; set; }
     public string? CivilSigner { get; set; }
     public string? StructSigner { get; set; }
+}
+
+public class FileUploadRequest
+{
+    [Required]
+    public string Name { get; set; } = null!;
+    
+    [Required]
+    public string Data { get; set; } = null!;
+
 }
