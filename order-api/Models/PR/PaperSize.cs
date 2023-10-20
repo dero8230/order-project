@@ -7,6 +7,7 @@ namespace order_api.Models.PR
     {
         public string PaperSizes { get; set; } = null!;
         public string Cost { get; set; } = null!;
+        public Guid PricingId { get; set; }
     }
 
     public class PaperSizeConfiguration : IEntityTypeConfiguration<PaperSize>

@@ -1,33 +1,52 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
     <title>Order Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
-    <table cellspacing="0" cellpadding="0" border="0" width="100%" style="font-family: Arial, sans-serif;">
+    <h1>Order Confirmation</h1>
+    <center>
+        <h6>Submitted by: {{submittedBy}}</h6>
+        <h6>Date Submitted: {{sDate}}</h6>
+    </center>
+    <p><strong>Project Number: </strong>{{projectNo}}</p>
+    <p><strong>Date Required: </strong>{{rDate}}</p>
+    <p><strong>Order Number: </strong>{{orderNo}}</p>
+
+    <p><strong>Notify Contact:</strong> {{name}}</p>
+
+    <table>
         <tr>
-            <td align="center" bgcolor="#f3f3f3" style="padding: 20px;">
-                <table cellspacing="0" cellpadding="0" border="0" width="600" style="background-color: #ffffff; border-radius: 10px;">
-                    <tr>
-                        <td style="padding: 40px;">
-                            <h1>Order Confirmation</h1>
-                            <p>Dear <span style="font-weight: bold;">{{name}}</span>,</p>
-                            <p>Your order with the following details has been successfully submitted:</p>
-                            <ul>
-                                <li><strong>Submitted By:</strong> {{submittedBy}}</li>
-                                <li><strong>Order Number:</strong> {{orderNo}}</li>
-                                <li><strong>Project Number:</strong> {{projectNo}}</li>
-                            </ul>
-                            <p>Thank you for choosing our services. We will process your order as soon as possible.</p>
-                            <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
-                            <p>Best regards,</p>
-                            <p>Your Company Name</p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
+            <th>Order Item</th>
+            <th>File Name</th>
+            <th>Page</th>
+            <th>Copies</th>
+            <th>Size</th>
+            <th>Note</th>
         </tr>
+        
+        {{orderDetail}}
     </table>
+
+
 </body>
 </html>

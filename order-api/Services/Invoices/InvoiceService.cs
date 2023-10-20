@@ -22,7 +22,7 @@ namespace order_api.Services.Invoices
                 InvoiceDate = createInvoiceRequest.InvoiceDate,
                 ProjectNumber = createInvoiceRequest.ProjectNumber,
                 SubmittedBy = createInvoiceRequest.SubmittedBy,
-                TotalCost = createInvoiceRequest.TotalCost,
+                TotalCost = await GetTotalCost(createInvoiceRequest.OrderId),
                 OrderId = createInvoiceRequest.OrderId,
                 Id = Guid.NewGuid().ToString(),
             };
@@ -59,6 +59,19 @@ namespace order_api.Services.Invoices
             }
 
             return new Result<Invoice>(invoice);
+        }
+
+        private async Task<decimal> GetTotalCost(string orderId)
+        {
+            decimal totalCost = 0;
+            var details = await _db.OrderDetails.Where(x => x.OrderId == orderId).ToListAsync();
+            foreach (var detail in details)
+            {
+                var cost = decimal.Parse(await _db.OrderItemPricings.Where(x => x.PricingId == Guid.Parse(detail.PricingId!)).Select(x => x.Cost).FirstAsync());
+                cost = (cost * detail.Pages! * int.Parse(detail.Quantity!)) ?? decimal.Zero;
+                totalCost += cost;
+            }
+            return totalCost;
         }
     }
 

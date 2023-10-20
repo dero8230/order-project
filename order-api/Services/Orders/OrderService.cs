@@ -31,22 +31,25 @@ namespace order_api.Services.Orders
         {
             List<OrderDetail> orderDetails = new();
             string orderID = DateTime.Now.ToString("ddMMyyHHmmssfff");
+            string basePath = _configuration.GetValue<string>("FileSavePath");
+            basePath = Path.Combine(basePath, orderID);
             foreach (var OrderDetail in createOrderRequest.OrderDetails)
             {
+                byte[] data = Convert.FromBase64String(OrderDetail.Data);
+                Directory.CreateDirectory(basePath);
+                string fullPath = Path.Combine(basePath, OrderDetail.Name);
+                await File.WriteAllBytesAsync(fullPath, data);
                 orderDetails.Add(new OrderDetail
                 {
                     
                     Name = OrderDetail.Name,
                     Quantity = OrderDetail.Quantity.ToString(),
-                    Description = OrderDetail.Description,
                     Pages = OrderDetail.Pages,
                     BindInSet = OrderDetail.BindInSet,
                     Notes = OrderDetail.Notes,
-                    FileStaged = OrderDetail.FileStaged,
-                    FileArchived = OrderDetail.FileArchived,
-                    FileQc = OrderDetail.FileQc,
-                    OrderId = orderID
-                
+                    OrderId = orderID,
+                    PricingId = OrderDetail.PricingId,
+                    Completed = false
                 }
                   );
             }
@@ -80,25 +83,6 @@ namespace order_api.Services.Orders
                 CivilSigner = createOrderRequest.OrderSignAndSeal.CivilSigner,
                 StructSigner = createOrderRequest.OrderSignAndSeal.StructSigner,
             };
-            string? filePaths = null;
-            if(createOrderRequest.Files != null)
-            {
-                List<string> paths = new();
-                foreach (var file in createOrderRequest.Files)
-                {
-                    byte[] data = Convert.FromBase64String(file.Data);
-                    string basePath = _configuration.GetValue<string>("FileSavePath");
-                    basePath = Path.Combine(basePath, orderID);
-                    Directory.CreateDirectory(basePath);
-                    string fullPath = Path.Combine(basePath, file.Name);
-                    await File.WriteAllBytesAsync(fullPath, data);
-                    paths.Add(fullPath);
-                }
-                if (paths.Count > 0)
-                {
-                    filePaths = string.Join("#m2m", paths);
-                }
-            }
 
             var order = new Order
             {
@@ -108,7 +92,7 @@ namespace order_api.Services.Orders
                 DateRequired = createOrderRequest.DateRequired,
                 SpecialInstructions = createOrderRequest.SpecialInstructions,
                 OrderType = createOrderRequest.OrderType,
-                OrderLink = filePaths,
+                OrderLink = basePath,
                 NotifyEmployee = createOrderRequest.NotifyEmployee,
                 NotifyEmployee2 = createOrderRequest.NotifyEmployee2,
                 OrderDetails = orderDetails,
@@ -125,16 +109,10 @@ namespace order_api.Services.Orders
             var user2 = await _db2.Ems.FirstOrDefaultAsync(x => x.Employee == order.NotifyEmployee2);
             if(user1 != null)
             {
-                var emailParams = new Dictionary<string, string>() { };
-                emailParams.Add("{{name}}", user1.FirstName ?? string.Empty);
-                emailParams.Add("{{submittedBy}}", order.SubmittedBy ?? string.Empty);
-                emailParams.Add("{{orderNo}}", order.OrderId ?? string.Empty);
-                emailParams.Add("{{projectNo}}", order.ProjectNumber);
-
                 var emailRequest = new SendEmailRequest()
                 {
                     Email = user1.Email ?? string.Empty,
-                    BodyParams = emailParams,
+                    BodyParams = GetParams(user1, order),
                     EmailTemplateType = EmailTemplateType.OrderSubmitted,
                     Subject = "Your Order has been recieved"
                 };
@@ -143,16 +121,10 @@ namespace order_api.Services.Orders
 
             if(user2 != null)
             {
-                var emailParams = new Dictionary<string, string>() { };
-                emailParams.Add("{{name}}", user2.FirstName ?? string.Empty);
-                emailParams.Add("{{submittedBy}}", order.SubmittedBy ?? string.Empty);
-                emailParams.Add("{{orderNo}}", order.OrderId ?? string.Empty);
-                emailParams.Add("{{projectNo}}", order.ProjectNumber);
-
                 var emailRequest = new SendEmailRequest()
                 {
                     Email = user2.Email ?? string.Empty,
-                    BodyParams = emailParams,
+                    BodyParams = GetParams(user2, order),
                     EmailTemplateType = EmailTemplateType.OrderSubmitted,
                     Subject = "Your Order has been recieved"
                 };
@@ -180,48 +152,30 @@ namespace order_api.Services.Orders
             order.NotifyEmployee2 = request.NotifyEmployee2 ?? order.NotifyEmployee2;
             order.Extras = request.Extras ?? order.Extras;
 
+            foreach (var item in request.OrderDetails)
+            {
+                var detail = await _db.OrderDetails.FirstAsync(x => x.DetailsId == item.DetailsId);
+                if (item.Deleted)
+                {
+                    _db.Remove(item);
+                    continue;
+                }
+                if (detail.Completed != true && item.Completed == true)
+                {
+                    detail.DateCompleted = DateTime.Now;
+                    detail.CompletedBy = _context.HttpContext?.User.Identity?.Name?.Split('\\')?.Last();
+                    if (detail.CompletedBy?.Length > 10)
+                    {
+                        detail.CompletedBy = detail.CompletedBy[..10];
+                    }
+                }
+                detail.Update(item);
+                _db.OrderDetails.Update(detail);
+
+            }
+
             _db.Orders.Update(order);
             await _db.SaveChangesAsync();
-
-            var user1 = await _db2.Ems.FirstOrDefaultAsync(x => x.Employee == order.NotifyEmployee);
-            var user2 = await _db2.Ems.FirstOrDefaultAsync(x => x.Employee == order.NotifyEmployee2);
-            if (user1 != null)
-            {
-                var emailParams = new Dictionary<string, string>() { };
-                emailParams.Add("{{name}}", user1.FirstName ?? string.Empty);
-                emailParams.Add("{{status}}}", Enum.GetName(order.Status) ?? string.Empty);
-                emailParams.Add("{{submittedBy}}", order.SubmittedBy ?? string.Empty);
-                emailParams.Add("{{orderNo}}", order.OrderId ?? string.Empty);
-                emailParams.Add("{{projectNo}}", order.ProjectNumber);
-
-                var emailRequest = new SendEmailRequest()
-                {
-                    Email = user1.Email ?? string.Empty,
-                    BodyParams = emailParams,
-                    EmailTemplateType = EmailTemplateType.OrderSubmitted,
-                    Subject = "Your Order has been Updated"
-                };
-                await _mailService.SendEmail(emailRequest);
-            }
-
-            if (user2 != null)
-            {
-                var emailParams = new Dictionary<string, string>() { };
-                emailParams.Add("{{name}}", user2.FirstName ?? string.Empty);
-                emailParams.Add("{{status}}}", Enum.GetName(order.Status) ?? string.Empty);
-                emailParams.Add("{{submittedBy}}", order.SubmittedBy ?? string.Empty);
-                emailParams.Add("{{orderNo}}", order.OrderId ?? string.Empty);
-                emailParams.Add("{{projectNo}}", order.ProjectNumber);
-
-                var emailRequest = new SendEmailRequest()
-                {
-                    Email = user2.Email ?? string.Empty,
-                    BodyParams = emailParams,
-                    EmailTemplateType = EmailTemplateType.OrderSubmitted,
-                    Subject = "Your Order has been recieved"
-                };
-                await _mailService.SendEmail(emailRequest);
-            }
 
             return new Result<Order>(order);
         }
@@ -233,45 +187,6 @@ namespace order_api.Services.Orders
             order.Status = OrderStatus.Canceled;
             _db.Update(order);
             await _db.SaveChangesAsync();
-            var user1 = await _db2.Ems.FirstOrDefaultAsync(x => x.Employee == order.NotifyEmployee);
-            var user2 = await _db2.Ems.FirstOrDefaultAsync(x => x.Employee == order.NotifyEmployee2);
-            if (user1 != null)
-            {
-                var emailParams = new Dictionary<string, string>() { };
-                emailParams.Add("{{name}}", user1.FirstName ?? string.Empty);
-                emailParams.Add("{{status}}}", Enum.GetName(order.Status) ?? string.Empty);
-                emailParams.Add("{{submittedBy}}", order.SubmittedBy ?? string.Empty);
-                emailParams.Add("{{orderNo}}", order.OrderId ?? string.Empty);
-                emailParams.Add("{{projectNo}}", order.ProjectNumber);
-
-                var emailRequest = new SendEmailRequest()
-                {
-                    Email = user1.Email ?? string.Empty,
-                    BodyParams = emailParams,
-                    EmailTemplateType = EmailTemplateType.OrderSubmitted,
-                    Subject = "Your Order has been Updated"
-                };
-                await _mailService.SendEmail(emailRequest);
-            }
-
-            if (user2 != null)
-            {
-                var emailParams = new Dictionary<string, string>() { };
-                emailParams.Add("{{name}}", user2.FirstName ?? string.Empty);
-                emailParams.Add("{{status}}}", Enum.GetName(order.Status) ?? string.Empty);
-                emailParams.Add("{{submittedBy}}", order.SubmittedBy ?? string.Empty);
-                emailParams.Add("{{orderNo}}", order.OrderId ?? string.Empty);
-                emailParams.Add("{{projectNo}}", order.ProjectNumber);
-
-                var emailRequest = new SendEmailRequest()
-                {
-                    Email = user2.Email ?? string.Empty,
-                    BodyParams = emailParams,
-                    EmailTemplateType = EmailTemplateType.OrderSubmitted,
-                    Subject = "Your Order has been recieved"
-                };
-                await _mailService.SendEmail(emailRequest);
-            }
             return Result.GetResult(order);
         }
         public async Task<Result<Order>> MarkAsComplete(string id)
@@ -281,59 +196,13 @@ namespace order_api.Services.Orders
             order.Status = OrderStatus.Completed;
             _db.Update(order);
             await _db.SaveChangesAsync();
-            var user1 = await _db2.Ems.FirstOrDefaultAsync(x => x.Employee == order.NotifyEmployee);
-            var user2 = await _db2.Ems.FirstOrDefaultAsync(x => x.Employee == order.NotifyEmployee2);
-            if (user1 != null)
-            {
-                var emailParams = new Dictionary<string, string>() { };
-                emailParams.Add("{{name}}", user1.FirstName ?? string.Empty);
-                emailParams.Add("{{status}}}", Enum.GetName(order.Status) ?? string.Empty);
-                emailParams.Add("{{submittedBy}}", order.SubmittedBy ?? string.Empty);
-                emailParams.Add("{{orderNo}}", order.OrderId ?? string.Empty);
-                emailParams.Add("{{projectNo}}", order.ProjectNumber);
-
-                var emailRequest = new SendEmailRequest()
-                {
-                    Email = user1.Email ?? string.Empty,
-                    BodyParams = emailParams,
-                    EmailTemplateType = EmailTemplateType.OrderSubmitted,
-                    Subject = "Your Order has been Updated"
-                };
-                await _mailService.SendEmail(emailRequest);
-            }
-
-            if (user2 != null)
-            {
-                var emailParams = new Dictionary<string, string>() { };
-                emailParams.Add("{{name}}", user2.FirstName ?? string.Empty);
-                emailParams.Add("{{status}}}", Enum.GetName(order.Status) ?? string.Empty);
-                emailParams.Add("{{submittedBy}}", order.SubmittedBy ?? string.Empty);
-                emailParams.Add("{{orderNo}}", order.OrderId ?? string.Empty);
-                emailParams.Add("{{projectNo}}", order.ProjectNumber);
-
-                var emailRequest = new SendEmailRequest()
-                {
-                    Email = user2.Email ?? string.Empty,
-                    BodyParams = emailParams,
-                    EmailTemplateType = EmailTemplateType.OrderSubmitted,
-                    Subject = "Your Order has been recieved"
-                };
-                await _mailService.SendEmail(emailRequest);
-            }
             return Result.GetResult(order);
         }
 
         public async Task<Result<List<Order>>> GetAllOrders()
         {
             var orders = await _db.Orders.AsQueryable().Where(x => true).OrderByDescending(x => x.DateSubmitted).ToListAsync();
-            List<Order> ordersList = new();
-            foreach (var order in orders)
-            {
-                order.OrderDetails = await _db.OrderDetails.AsQueryable().Where(e=> e.OrderId == order.OrderId).ToListAsync();
-                order.OrderSignAndSeal = await _db.OrderSignAndSeals.AsQueryable().Where(e => e.OrderId == order.OrderId).FirstOrDefaultAsync();
-                ordersList.Add(order);
-            }
-            return new Result<List<Order>>(ordersList);
+            return new Result<List<Order>>(orders);
         }
 
         public async Task<Result<Order>> GetOrder(string id)
@@ -381,7 +250,8 @@ namespace order_api.Services.Orders
                 .Select(g => new PaperSize
                 {
                     PaperSizes = g.Key,
-                    Cost = g.Min(oip => oip.Cost)??"0"
+                    Cost = g.Min(oip => oip.Cost)??"0",
+                    PricingId = g.Where(x => x.Cost == g.Min(oip => oip.Cost)).Select(x => x.PricingId).FirstOrDefault() ?? Guid.Empty,
                 })
                 .OrderBy(g => g.Cost)
                 .ThenByDescending(g => g.PaperSizes)
@@ -424,5 +294,39 @@ namespace order_api.Services.Orders
             return new Result<object>(result);
         }
 
+        private Dictionary<string, string> GetParams(Em user,Order order)
+        {
+            var orderType = GetOrderType(order.OrderType);
+            var emailParams = new Dictionary<string, string>() { };
+            emailParams.Add("{{name}}", user.FirstName ?? string.Empty);
+            emailParams.Add("{{status}}}", Enum.GetName(order.Status) ?? string.Empty);
+            emailParams.Add("{{submittedBy}}", order.SubmittedBy ?? string.Empty);
+            emailParams.Add("{{orderNo}}", order.OrderId ?? string.Empty);
+            emailParams.Add("{{projectNo}}", order.ProjectNumber);
+            emailParams.Add("{{sDate}}", order.DateSubmitted?.ToString("g") ?? string.Empty);
+            emailParams.Add("{{rDate}}", order.DateRequired?.ToString("g") ?? string.Empty);
+            List<string> orderDetails = new();
+            foreach (var item in order.OrderDetails)
+            {
+                var size = _db.OrderItemPricings.Where(x => x.PricingId == Guid.Parse(item.PricingId ?? Guid.Empty.ToString())).Select(item => item.Size).FirstOrDefault();
+                string detals = $"<tr>\n<td>{orderType}</td>\n<td>{item.Name}</td>\n<td>{item.Pages}</td>\n<td>{item.Quantity}</td>\n<td>{size}</td>\n<td>{item.Notes}</td>\n</tr>";
+                orderDetails.Add(detals);
+            }
+            emailParams.Add("{{orderDetail}}", string.Join("\n", orderDetails));
+            return emailParams;
+        }
+
+        private string GetOrderType(string? orderType)
+        {
+            return orderType switch
+            {
+                "0" => "Print",
+                "1" => "Scan",
+                "2" => "Electronic S and S",
+                "3" => "USB / CD",
+                "4" => "Chicago - Tree Towns",
+                _ => "Print",
+            };
+        }
     }
 }

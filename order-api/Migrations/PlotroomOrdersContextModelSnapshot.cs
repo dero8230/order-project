@@ -208,6 +208,9 @@ namespace order_api.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(4)");
 
+                    b.Property<string>("Size")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("DetailsId");
 
                     b.ToTable("OrderDetails");

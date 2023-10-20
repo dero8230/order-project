@@ -19,24 +19,19 @@ public class CreateOrderRequest
 
     public List<CreateOrderDetailRequest>OrderDetails { get; set; } = null!;
     public CreateOrderSignAndSealRequest? OrderSignAndSeal { get; set; }
-    public List<FileUploadRequest>? Files { get; set; }
 }
 
 public class CreateOrderDetailRequest
 {
     public int Index { get; set; }
-    public string Name { get; set; }
-    public int? Quantity { get; set; }
+    public string Name { get; set; } = null!;
+    public int Quantity { get; set; } = 1;
     public bool? BindInSet { get; set; }
-    public string? Description { get; set; }
-    public int? Pages { get; set; }
-    public bool? Completed { get; set; }
-    public DateTime? DateCompleted { get; set; }
-    public string? CompletedBy { get; set; }
+    public int Pages { get; set; } = 1;
     public string? Notes { get; set; }
-    public bool? FileStaged { get; set; }
-    public bool? FileArchived { get; set; }
-    public bool? FileQc { get; set; }
+    [Required]
+    public string Data { get; set; } = null!;
+    public string? PricingId { get; set; }
 }
 
 public class CreateOrderSignAndSealRequest

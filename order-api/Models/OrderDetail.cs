@@ -1,4 +1,5 @@
-﻿using System;
+﻿using order_api.requests.order;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -38,4 +39,16 @@ public partial class OrderDetail
     public bool? FileArchived { get; set; }
 
     public bool? FileQc { get; set; }
+
+    public OrderDetail Update(UpdateOrderDetailRequest request)
+    {
+        PricingId = request.PricingId ?? PricingId;
+        Quantity = request.Quantity != Pages ? request.Quantity.ToString() : Quantity;
+        BindInSet = request.BindInSet != null ? request.BindInSet : BindInSet;
+        Pages = request.Pages != Pages ? request.Pages : Pages;
+        Completed = request.Completed != null ? request.Completed : Completed;
+        Notes = request.Notes ?? Notes;
+        return this; // Return the updated OrderDetail instance.
+    }
+
 }
